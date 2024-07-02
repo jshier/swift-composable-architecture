@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ComposableArchitecture - TextState</title>
+    <link rel="stylesheet" type="text/css" href="/swift-composable-architecture/all.css" media="all" />
+</head>
+<body>
+    <header>
+        <a href="/swift-composable-architecture/">
+            <strong>
+                ComposableArchitecture
+            </strong>
+            <span>Documentation</span>
+        </a>
+    </header>
+
+    <!--
+    <form class="search">
+        <input type="search" placeholder="Search" />
+    </form>
+    -->
+
+    <nav>
+        <div class="wrapper">
+            <h2>On This Page</h2>
+            <ol><li><a href="#relationships">Relationships</a><ul><li><a href="#relationships">Nested Types</a></li><li><a href="#relationships">Conforms To</a></li></ul></li><li><a href="#initializers">Initializers</a><ul><li class="initializer"><a href="#textstate.init(verbatim:)">init(verbatim:​)</a></li><li class="initializer"><a href="#textstate.init(_:)">init(_:​)</a></li><li class="initializer"><a href="#textstate.init(_:tablename:bundle:comment:)">init(_:​table​Name:​bundle:​comment:​)</a></li></ul></li><li><a href="#properties">Properties</a><ul><li class="variable"><a href="#textstate.body">body</a></li><li class="variable"><a href="#textstate.customdumpvalue">custom​Dump​Value</a></li></ul></li><li><a href="#methods">Methods</a><ul><li class="function"><a href="#textstate.baselineoffset(_:)">baseline​Offset(_:​)</a></li><li class="function"><a href="#textstate.bold()">bold()</a></li><li class="function"><a href="#textstate.font(_:)">font(_:​)</a></li><li class="function"><a href="#textstate.fontweight(_:)">font​Weight(_:​)</a></li><li class="function"><a href="#textstate.foregroundcolor(_:)">foreground​Color(_:​)</a></li><li class="function"><a href="#textstate.italic()">italic()</a></li><li class="function"><a href="#textstate.kerning(_:)">kerning(_:​)</a></li><li class="function"><a href="#textstate.strikethrough(_:color:)">strikethrough(_:​color:​)</a></li><li class="function"><a href="#textstate.tracking(_:)">tracking(_:​)</a></li><li class="function"><a href="#textstate.underline(_:color:)">underline(_:​color:​)</a></li><li class="function"><a href="#textstate.accessibilityheading(_:)">accessibility​Heading(_:​)</a></li><li class="function"><a href="#textstate.accessibilitylabel(_:)">accessibility​Label(_:​)</a></li><li class="function"><a href="#textstate.accessibilitylabel(_:)">accessibility​Label(_:​)</a></li><li class="function"><a href="#textstate.accessibilitylabel(_:tablename:bundle:comment:)">accessibility​Label(_:​table​Name:​bundle:​comment:​)</a></li><li class="function"><a href="#textstate.accessibilitytextcontenttype(_:)">accessibility​Text​Content​Type(_:​)</a></li></ul></li><li><a href="#operators">Operators</a><ul><li class="function"><a href="#textstate.+">+</a></li></ul></li></ol>
+        </div>
+    </nav>
+
+    <main>
+        <article>
+            <h1>
+    <small>Structure</small>
+    <code class="name">Text​State</code>
+</h1>
+
+<div class="declaration">
+<pre class="highlight"><code><html><body><span class="keyword">public</span> <span class="keyword">struct</span> <span class="type">TextState</span>: <span class="type">Equatable</span>, <span class="type">Hashable</span>  </body></html></code></pre>
+</div>
+<div class="summary" role="doc-abstract">
+    <p>An equatable description of SwiftUI <code>Text</code>. Useful for storing rich text in state for the
+purpose of rendering in a view hierarchy.</p>
+
+</div>
+<div class="discussion">
+    <p>Although <code>SwiftUI.Text</code> and <code>SwiftUI.LocalizedStringKey</code> are value types that conform to
+<code>Equatable</code>, their <code>==</code> do not return <code>true</code> when used with seemingly equal values. If we were
+to naively store these values in state, our tests may begin to fail.</p>
+
+<p><code>TextState</code> solves this problem by providing an interface similar to <code>SwiftUI.Text</code> that can
+be held in state and asserted against.</p>
+
+<p>Let's say you wanted to hold some dynamic, styled text content in your app state. You could use
+<code>TextState</code>:</p>
+
+<html><body><pre class="highlight"><code><span class="keyword">struct</span> <span class="type">AppState</span>: <span class="type">Equatable</span> {
+  <span class="keyword">var</span> <span class="variable">label</span>: <span class="type">TextState</span>
+}
+</code></pre></body></html>
+<p>Your reducer can then assign a value to this state using an API similar to that of
+<code>SwiftUI.Text</code>.</p>
+
+<html><body><pre class="highlight"><code><span class="variable">state</span>.<span class="variable">label</span> = <span class="variable">TextState</span>(<span class="string literal">"</span><span class="string literal">Hello, </span><span class="string literal">"</span>) + <span class="variable">TextState</span>(<span class="variable">name</span>).<span class="variable">bold</span>() + <span class="variable">TextState</span>(<span class="string literal">"</span><span class="string literal">!</span><span class="string literal">"</span>)
+</code></pre></body></html>
+<p>And your view store can render it directly:</p>
+
+<html><body><pre class="highlight"><code><span class="keyword">var</span> <span class="variable">body</span>: <span class="keyword">some</span> <span class="type">View</span> {
+  <span class="variable">WithViewStore</span>(<span class="keyword">self</span>.<span class="variable">store</span>) { <span class="variable">viewStore</span> <span class="keyword">in</span>
+    <span class="variable">viewStore</span>.<span class="variable">label</span>
+  }
+}
+</code></pre></body></html>
+<p>Certain SwiftUI APIs, like alerts and confirmation dialogs, take <code>Text</code> values and, not views.
+To convert <code>TextState</code> to <code>SwiftUI.Text</code> for this purpose, you can use the <code>Text</code> initializer:</p>
+
+<html><body><pre class="highlight"><code><span class="variable">Alert</span>(<span class="variable">title</span>: <span class="type">Text</span>(<span class="variable">viewStore</span>.<span class="variable">label</span>))
+</code></pre></body></html>
+<p>The Composable Architecture comes with a few convenience APIs for alerts and dialogs that wrap
+<code>TextState</code> under the hood. See <code>AlertState</code> and <code>ActionState</code> accordingly.</p>
+
+<p>In the future, should <code>SwiftUI.Text</code> and <code>SwiftUI.LocalizedStringKey</code> reliably conform to
+<code>Equatable</code>, <code>TextState</code> may be deprecated.</p>
+
+<aside class="note" title="Note">
+    <p><code>TextState</code> does not support <em>all</em> <code>LocalizedStringKey</code> permutations at this time (interpolated <code>SwiftUI.Image</code>s, for example). <code>TextState</code> also uses reflection to determine <code>LocalizedStringKey</code> equatability, so be mindful of edge cases.</p>
+
+</aside>
+</div>
+<section id="relationships">
+    <h2 hidden>Relationships</h2>
+        <figure>
+    <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.40.1 (20161225.0304)
+ -->
+<!-- Title: %11 Pages: 1 -->
+<svg width="1127pt" height="243pt"
+ viewBox="0.00 0.00 1127.06 243.49" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 239.49)">
+<title>%11</title>
+<polygon fill="#ffffff" stroke="transparent" points="-4,4 -4,-239.49 1123.0596,-239.49 1123.0596,4 -4,4"/>
+<!-- TextState -->
+<g id="node1" class="node structure current">
+<title>TextState</title>
+<g id="a_node1"><a xlink:href="/swift-composable-architecture/TextState" xlink:title="TextState">
+<path fill="none" stroke="#000000" stroke-width="3" d="M654.4907,-136.0408C654.4907,-136.0408 462.4907,-136.0408 462.4907,-136.0408 456.4907,-136.0408 450.4907,-130.0408 450.4907,-124.0408 450.4907,-124.0408 450.4907,-112.0408 450.4907,-112.0408 450.4907,-106.0408 456.4907,-100.0408 462.4907,-100.0408 462.4907,-100.0408 654.4907,-100.0408 654.4907,-100.0408 660.4907,-100.0408 666.4907,-106.0408 666.4907,-112.0408 666.4907,-112.0408 666.4907,-124.0408 666.4907,-124.0408 666.4907,-130.0408 660.4907,-136.0408 654.4907,-136.0408"/>
+<text text-anchor="middle" x="558.4907" y="-114.3408" font-family="Menlo" font-size="14.00" fill="#000000">TextState</text>
+</a>
+</g>
+</g>
+<!-- View -->
+<g id="node2" class="node unknown">
+<title>View</title>
+<path fill="none" stroke="#000000" d="M1107.0596,-71.1618C1107.0596,-71.1618 915.0596,-71.1618 915.0596,-71.1618 909.0596,-71.1618 903.0596,-65.1618 903.0596,-59.1618 903.0596,-59.1618 903.0596,-47.1618 903.0596,-47.1618 903.0596,-41.1618 909.0596,-35.1618 915.0596,-35.1618 915.0596,-35.1618 1107.0596,-35.1618 1107.0596,-35.1618 1113.0596,-35.1618 1119.0596,-41.1618 1119.0596,-47.1618 1119.0596,-47.1618 1119.0596,-59.1618 1119.0596,-59.1618 1119.0596,-65.1618 1113.0596,-71.1618 1107.0596,-71.1618"/>
+<text text-anchor="middle" x="1011.0596" y="-49.4618" font-family="Menlo" font-size="14.00" fill="#000000">View</text>
+</g>
+<!-- TextState&#45;&gt;View -->
+<g id="edge2" class="edge conformsTo">
+<title>TextState&#45;&gt;View</title>
+<path fill="none" stroke="#000000" d="M666.6046,-102.5419C734.7656,-92.7705 822.8105,-80.1486 892.8229,-70.1119"/>
+<polygon fill="#000000" stroke="#000000" points="893.6152,-73.5341 903.0173,-68.6504 892.6218,-66.605 893.6152,-73.5341"/>
+</g>
+<!-- Equatable -->
+<g id="node3" class="node unknown">
+<title>Equatable</title>
+<path fill="none" stroke="#000000" d="M361.7959,-36C361.7959,-36 169.7959,-36 169.7959,-36 163.7959,-36 157.7959,-30 157.7959,-24 157.7959,-24 157.7959,-12 157.7959,-12 157.7959,-6 163.7959,0 169.7959,0 169.7959,0 361.7959,0 361.7959,0 367.7959,0 373.7959,-6 373.7959,-12 373.7959,-12 373.7959,-24 373.7959,-24 373.7959,-30 367.7959,-36 361.7959,-36"/>
+<text text-anchor="middle" x="265.7959" y="-14.3" font-family="Menlo" font-size="14.00" fill="#000000">Equatable</text>
+</g>
+<!-- TextState&#45;&gt;Equatable -->
+<g id="edge1" class="edge conformsTo">
+<title>TextState&#45;&gt;Equatable</title>
+<path fill="none" stroke="#000000" d="M505.8247,-100.04C455.9329,-82.9873 380.9812,-57.3694 328.1319,-39.3059"/>
+<polygon fill="#000000" stroke="#000000" points="329.1265,-35.9472 318.532,-36.0248 326.8625,-42.571 329.1265,-35.9472"/>
+</g>
+<!-- CustomDumpRepresentable -->
+<g id="node4" class="node unknown">
+<title>CustomDumpRepresentable</title>
+<path fill="none" stroke="#000000" d="M206,-201.7784C206,-201.7784 12,-201.7784 12,-201.7784 6,-201.7784 0,-195.7784 0,-189.7784 0,-189.7784 0,-177.7784 0,-177.7784 0,-171.7784 6,-165.7784 12,-165.7784 12,-165.7784 206,-165.7784 206,-165.7784 212,-165.7784 218,-171.7784 218,-177.7784 218,-177.7784 218,-189.7784 218,-189.7784 218,-195.7784 212,-201.7784 206,-201.7784"/>
+<text text-anchor="middle" x="109" y="-180.0784" font-family="Menlo" font-size="14.00" fill="#000000">CustomDumpRepresentable</text>
+</g>
+<!-- TextState&#45;&gt;CustomDumpRepresentable -->
+<g id="edge3" class="edge conformsTo">
+<title>TextState&#45;&gt;CustomDumpRepresentable</title>
+<path fill="none" stroke="#000000" d="M450.2545,-133.8702C383.2797,-143.6653 297.2247,-156.2507 228.2881,-166.3326"/>
+<polygon fill="#000000" stroke="#000000" points="227.6339,-162.891 218.2456,-167.8014 228.6469,-169.8173 227.6339,-162.891"/>
+</g>
+<!-- Hashable -->
+<g id="node5" class="node unknown">
+<title>Hashable</title>
+<path fill="none" stroke="#000000" d="M952.034,-235.49C952.034,-235.49 760.034,-235.49 760.034,-235.49 754.034,-235.49 748.034,-229.49 748.034,-223.49 748.034,-223.49 748.034,-211.49 748.034,-211.49 748.034,-205.49 754.034,-199.49 760.034,-199.49 760.034,-199.49 952.034,-199.49 952.034,-199.49 958.034,-199.49 964.034,-205.49 964.034,-211.49 964.034,-211.49 964.034,-223.49 964.034,-223.49 964.034,-229.49 958.034,-235.49 952.034,-235.49"/>
+<text text-anchor="middle" x="856.034" y="-213.79" font-family="Menlo" font-size="14.00" fill="#000000">Hashable</text>
+</g>
+<!-- TextState&#45;&gt;Hashable -->
+<g id="edge4" class="edge conformsTo">
+<title>TextState&#45;&gt;Hashable</title>
+<path fill="none" stroke="#000000" d="M612.3736,-136.0503C662.981,-152.9651 738.7304,-178.2831 792.3139,-196.1925"/>
+<polygon fill="#000000" stroke="#000000" points="791.4563,-199.5962 802.0501,-199.4467 793.6753,-192.9572 791.4563,-199.5962"/>
+</g>
+</g>
+</svg>
+
+
+    <figcaption hidden>Inheritance graph for TextState.</figcaption>
+</figure>
+        <h3>Nested Types</h3>
+<dl>
+    <dt class="enumeration"><code><a href="/swift-composable-architecture/TextState_AccessibilityTextContentType">TextState.AccessibilityTextContentType</a></code></dt>
+<dd></dd>
+<dt class="enumeration"><code><a href="/swift-composable-architecture/TextState_AccessibilityHeadingLevel">TextState.AccessibilityHeadingLevel</a></code></dt>
+<dd></dd>
+</dl>
+<h3>Conforms To</h3>
+<dl>
+    <dt class="unknown"><code>CustomDumpRepresentable</code></dt>
+<dt class="unknown"><code>Equatable</code></dt>
+<dt class="unknown"><code>Hashable</code></dt>
+<dt class="unknown"><code>View</code></dt>
+</dl>
+</section>
+    <section id="initializers">
+        <h2>Initializers</h2>
+
+        <div role="article" class="initializer" id="textstate.init(verbatim:)">
+    <h3>
+        <code><a href="#textstate.init(verbatim:)">init(verbatim:​)</a></code>
+    </h3>
+    <div class="declaration">
+<pre class="highlight"><code><html><body><span class="keyword">public</span> <span class="keyword">init</span>(<span class="variable">verbatim</span> <span class="variable">content</span>: <span class="type">String</span>)  </body></html></code></pre>
+</div>
+</div>
+<div role="article" class="initializer" id="textstate.init(_:)">
+    <h3>
+        <code><a href="#textstate.init(_:)">init(_:​)</a></code>
+    </h3>
+    <div class="declaration">
+<pre class="highlight"><code><html><body><span class="attribute">@</span><span class="attribute">_disfavoredOverload</span>
+  <span class="keyword">public</span> <span class="keyword">init</span>&lt;<span class="variable">S</span>&gt;(<span class="keyword">_</span> <span class="variable">content</span>: <span class="type">S</span>) <span class="keyword">where</span> <span class="type">S</span>: <span class="type">StringProtocol</span>  </body></html></code></pre>
+</div>
+</div>
+<div role="article" class="initializer" id="textstate.init(_:tablename:bundle:comment:)">
+    <h3>
+        <code><a href="#textstate.init(_:tablename:bundle:comment:)">init(_:​table​Name:​bundle:​comment:​)</a></code>
+    </h3>
+    <div class="declaration">
+<pre class="highlight"><code><html><body><span class="keyword">public</span> <span class="keyword">init</span>(
+    <span class="keyword">_</span> <span class="variable">key</span>: <span class="type">LocalizedStringKey</span>,
+    <span class="variable">tableName</span>: <span class="type">String</span>? = <span class="keyword">nil</span>,
+    <span class="variable">bundle</span>: <span class="type">Bundle</span>? = <span class="keyword">nil</span>,
+    <span class="variable">comment</span>: <span class="type">StaticString</span>? = <span class="keyword">nil</span>
+  )  </body></html></code></pre>
+</div>
+</div>
+    </section>
+    <section id="properties">
+        <h2>Properties</h2>
+
+        <div role="article" class="variable" id="textstate.body">
+    <h3>
+        <code><a href="#textstate.body">body</a></code>
+    </h3>
+    <div class="declaration">
+<pre class="highlight"><code><html><body><span class="keyword">public</span> <span class="keyword">var</span> <span class="variable">body</span>: <span class="keyword">some</span> <span class="type">View</span>  </body></html></code></pre>
+</div>
+</div>
+<div role="article" class="variable" id="textstate.customdumpvalue">
+    <h3>
+        <code><a href="#textstate.customdumpvalue">custom​Dump​Value</a></code>
+    </h3>
+    <div class="declaration">
+<pre class="highlight"><code><html><body><span class="keyword">public</span> <span class="keyword">var</span> <span class="variable">customDumpValue</span>: <span class="keyword">Any</span>  </body></html></code></pre>
+</div>
+</div>
+    </section>
+    <section id="methods">
+        <h2>Methods</h2>
+
+        <div role="article" class="function" id="textstate.baselineoffset(_:)">
+    <h3>
+        <code><a href="#textstate.baselineoffset(_:)">baseline​Offset(_:​)</a></code>
+    </h3>
+    <div class="declaration">
+<pre class="highlight"><code><html><body><span class="keyword">public</span> <span class="keyword">func</span> <span class="function">baselineOffset</span>(<span class="keyword">_</span> <span class="variable">baselineOffset</span>: <span class="type">CGFloat</span>) -&gt; <span class="keyword">Self</span>  </body></html></code></pre>
+</div>
+</div>
+<div role="article" class="function" id="textstate.bold()">
+    <h3>
+        <code><a href="#textstate.bold()">bold()</a></code>
+    </h3>
+    <div class="declaration">
+<pre class="highlight"><code><html><body><span class="keyword">public</span> <span class="keyword">func</span> <span class="function">bold</span>() -&gt; <span class="keyword">Self</span>  </body></html></code></pre>
+</div>
+</div>
+<div role="article" class="function" id="textstate.font(_:)">
+    <h3>
+        <code><a href="#textstate.font(_:)">font(_:​)</a></code>
+    </h3>
+    <div class="declaration">
+<pre class="highlight"><code><html><body><span class="keyword">public</span> <span class="keyword">func</span> <span class="function">font</span>(<span class="keyword">_</span> <span class="variable">font</span>: <span class="type">Font</span>?) -&gt; <span class="keyword">Self</span>  </body></html></code></pre>
+</div>
+</div>
+<div role="article" class="function" id="textstate.fontweight(_:)">
+    <h3>
+        <code><a href="#textstate.fontweight(_:)">font​Weight(_:​)</a></code>
+    </h3>
+    <div class="declaration">
+<pre class="highlight"><code><html><body><span class="keyword">public</span> <span class="keyword">func</span> <span class="function">fontWeight</span>(<span class="keyword">_</span> <span class="variable">weight</span>: <span class="type">Font</span>.<span class="type">Weight</span>?) -&gt; <span class="keyword">Self</span>  </body></html></code></pre>
+</div>
+</div>
+<div role="article" class="function" id="textstate.foregroundcolor(_:)">
+    <h3>
+        <code><a href="#textstate.foregroundcolor(_:)">foreground​Color(_:​)</a></code>
+    </h3>
+    <div class="declaration">
+<pre class="highlight"><code><html><body><span class="keyword">public</span> <span class="keyword">func</span> <span class="function">foregroundColor</span>(<span class="keyword">_</span> <span class="variable">color</span>: <span class="type">Color</span>?) -&gt; <span class="keyword">Self</span>  </body></html></code></pre>
+</div>
+</div>
+<div role="article" class="function" id="textstate.italic()">
+    <h3>
+        <code><a href="#textstate.italic()">italic()</a></code>
+    </h3>
+    <div class="declaration">
+<pre class="highlight"><code><html><body><span class="keyword">public</span> <span class="keyword">func</span> <span class="function">italic</span>() -&gt; <span class="keyword">Self</span>  </body></html></code></pre>
+</div>
+</div>
+<div role="article" class="function" id="textstate.kerning(_:)">
+    <h3>
+        <code><a href="#textstate.kerning(_:)">kerning(_:​)</a></code>
+    </h3>
+    <div class="declaration">
+<pre class="highlight"><code><html><body><span class="keyword">public</span> <span class="keyword">func</span> <span class="function">kerning</span>(<span class="keyword">_</span> <span class="variable">kerning</span>: <span class="type">CGFloat</span>) -&gt; <span class="keyword">Self</span>  </body></html></code></pre>
+</div>
+</div>
+<div role="article" class="function" id="textstate.strikethrough(_:color:)">
+    <h3>
+        <code><a href="#textstate.strikethrough(_:color:)">strikethrough(_:​color:​)</a></code>
+    </h3>
+    <div class="declaration">
+<pre class="highlight"><code><html><body><span class="keyword">public</span> <span class="keyword">func</span> <span class="function">strikethrough</span>(<span class="keyword">_</span> <span class="variable">active</span>: <span class="type">Bool</span> = <span class="keyword">true</span>, <span class="variable">color</span>: <span class="type">Color</span>? = <span class="keyword">nil</span>) -&gt; <span class="keyword">Self</span>  </body></html></code></pre>
+</div>
+</div>
+<div role="article" class="function" id="textstate.tracking(_:)">
+    <h3>
+        <code><a href="#textstate.tracking(_:)">tracking(_:​)</a></code>
+    </h3>
+    <div class="declaration">
+<pre class="highlight"><code><html><body><span class="keyword">public</span> <span class="keyword">func</span> <span class="function">tracking</span>(<span class="keyword">_</span> <span class="variable">tracking</span>: <span class="type">CGFloat</span>) -&gt; <span class="keyword">Self</span>  </body></html></code></pre>
+</div>
+</div>
+<div role="article" class="function" id="textstate.underline(_:color:)">
+    <h3>
+        <code><a href="#textstate.underline(_:color:)">underline(_:​color:​)</a></code>
+    </h3>
+    <div class="declaration">
+<pre class="highlight"><code><html><body><span class="keyword">public</span> <span class="keyword">func</span> <span class="function">underline</span>(<span class="keyword">_</span> <span class="variable">active</span>: <span class="type">Bool</span> = <span class="keyword">true</span>, <span class="variable">color</span>: <span class="type">Color</span>? = <span class="keyword">nil</span>) -&gt; <span class="keyword">Self</span>  </body></html></code></pre>
+</div>
+</div>
+<div role="article" class="function" id="textstate.accessibilityheading(_:)">
+    <h3>
+        <code><a href="#textstate.accessibilityheading(_:)">accessibility​Heading(_:​)</a></code>
+    </h3>
+    <div class="declaration">
+<pre class="highlight"><code><html><body><span class="keyword">public</span> <span class="keyword">func</span> <span class="function">accessibilityHeading</span>(<span class="keyword">_</span> <span class="variable">headingLevel</span>: <span class="type">AccessibilityHeadingLevel</span>) -&gt; <span class="keyword">Self</span>  </body></html></code></pre>
+</div>
+</div>
+<div role="article" class="function" id="textstate.accessibilitylabel(_:)">
+    <h3>
+        <code><a href="#textstate.accessibilitylabel(_:)">accessibility​Label(_:​)</a></code>
+    </h3>
+    <div class="declaration">
+<pre class="highlight"><code><html><body><span class="keyword">public</span> <span class="keyword">func</span> <span class="function">accessibilityLabel</span>(<span class="keyword">_</span> <span class="variable">string</span>: <span class="type">String</span>) -&gt; <span class="keyword">Self</span>  </body></html></code></pre>
+</div>
+</div>
+<div role="article" class="function" id="textstate.accessibilitylabel(_:)">
+    <h3>
+        <code><a href="#textstate.accessibilitylabel(_:)">accessibility​Label(_:​)</a></code>
+    </h3>
+    <div class="declaration">
+<pre class="highlight"><code><html><body><span class="keyword">public</span> <span class="keyword">func</span> <span class="function">accessibilityLabel</span>&lt;<span class="variable">S</span>: <span class="type">StringProtocol</span>&gt;(<span class="keyword">_</span> <span class="variable">string</span>: <span class="type">S</span>) -&gt; <span class="keyword">Self</span>  </body></html></code></pre>
+</div>
+</div>
+<div role="article" class="function" id="textstate.accessibilitylabel(_:tablename:bundle:comment:)">
+    <h3>
+        <code><a href="#textstate.accessibilitylabel(_:tablename:bundle:comment:)">accessibility​Label(_:​table​Name:​bundle:​comment:​)</a></code>
+    </h3>
+    <div class="declaration">
+<pre class="highlight"><code><html><body><span class="keyword">public</span> <span class="keyword">func</span> <span class="function">accessibilityLabel</span>(
+    <span class="keyword">_</span> <span class="variable">key</span>: <span class="type">LocalizedStringKey</span>, <span class="variable">tableName</span>: <span class="type">String</span>? = <span class="keyword">nil</span>, <span class="variable">bundle</span>: <span class="type">Bundle</span>? = <span class="keyword">nil</span>,
+    <span class="variable">comment</span>: <span class="type">StaticString</span>? = <span class="keyword">nil</span>
+  ) -&gt; <span class="keyword">Self</span>  </body></html></code></pre>
+</div>
+</div>
+<div role="article" class="function" id="textstate.accessibilitytextcontenttype(_:)">
+    <h3>
+        <code><a href="#textstate.accessibilitytextcontenttype(_:)">accessibility​Text​Content​Type(_:​)</a></code>
+    </h3>
+    <div class="declaration">
+<pre class="highlight"><code><html><body><span class="keyword">public</span> <span class="keyword">func</span> <span class="function">accessibilityTextContentType</span>(<span class="keyword">_</span> <span class="variable">type</span>: <span class="type">AccessibilityTextContentType</span>) -&gt; <span class="keyword">Self</span>  </body></html></code></pre>
+</div>
+</div>
+    </section>
+    <section id="operators">
+        <h2>Operators</h2>
+
+        <div role="article" class="function" id="textstate.+">
+    <h3>
+        <code><a href="#textstate.+">+</a></code>
+    </h3>
+    <div class="declaration">
+<pre class="highlight"><code><html><body><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">func</span> + (<span class="variable">lhs</span>: <span class="keyword">Self</span>, <span class="variable">rhs</span>: <span class="keyword">Self</span>) -&gt; <span class="keyword">Self</span>  </body></html></code></pre>
+</div>
+</div>
+    </section>
+
+
+
+        </article>
+    </main>
+
+    <footer>
+        <p>
+    Generated on <time datetime="2022-03-15T20:32:50+0000">March 15, 2022</time> using <a href="https://github.com/SwiftDocOrg/swift-doc">swift-doc</a> <span class="version">1.0.0-rc.1</span>.
+</p>
+    </footer>
+</body>
+</html>
